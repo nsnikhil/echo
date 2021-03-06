@@ -36,7 +36,7 @@ http-serve: build
 
 docker-build:
 	docker build -t $(DOCKER_REGISTRY_USER_NAME)/$(APP):$(APP_VERSION) .
-	docker rmi -f $$(docker images -f "dangling=true" -q)
+	docker rmi -f $$(docker images -f "dangling=true" -q) || true
 
 docker-push: docker-build
 	docker push $(DOCKER_REGISTRY_USER_NAME)/$(APP):$(APP_VERSION)
