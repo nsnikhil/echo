@@ -6,28 +6,33 @@ import (
 	"os"
 )
 
-func startServer(address string) {
-	writeData := func(code int, msg string, resp http.ResponseWriter) {
-		resp.WriteHeader(code)
-		_, _ = resp.Write([]byte(msg))
+func echoHandler(resp http.ResponseWriter, req *http.Request) {
+	val, ok := req.URL.Query()["value"]
+
+	if !ok || len(val) == 0 || len(val[0]) == 0 {
+		log.Printf("invalid url, value is missing: %s", req.URL.String())
+		resp.WriteHeader(http.StatusBadRequest)
+		_, _ = resp.Write([]byte("invalid url, value is missing"))
+		return
 	}
 
-	http.HandleFunc("/echo", func(resp http.ResponseWriter, req *http.Request) {
-		val, ok := req.URL.Query()["value"]
-		if !ok || len(val) == 0 || len(val[0]) == 0 {
-			log.Printf("invalid url, value is missing: %s", req.URL.String())
-			writeData(http.StatusBadRequest, "invalid url, value is missing", resp)
-			return
-		}
+	log.Printf("echo success: %s", val[0])
+	resp.WriteHeader(http.StatusOK)
+	_, _ = resp.Write([]byte(val[0]))
+}
 
-		log.Printf("echo success: %s", val[0])
-		writeData(http.StatusOK, val[0], resp)
-	})
+func startServer(address string) {
+	http.HandleFunc("/echo", echoHandler)
 
 	log.Printf("listening on: %s", address)
 	_ = http.ListenAndServe(address, nil)
 }
 
 func main() {
-	startServer(os.Getenv("ADDRESS"))
+	address := os.Getenv("ADDRESS")
+	if len(address) == 0 {
+		log.Fatal("please provide a valid address")
+	}
+
+	startServer(address)
 }
